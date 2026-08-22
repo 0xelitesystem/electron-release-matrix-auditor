@@ -1,0 +1,1343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electron Release Matrix Auditor</title>
+<meta name="description" content="Paste a GitHub Actions workflow. See which release artifacts the matrix legs will fight over and whether two legs can create two draft releases for one tag.">
+<link rel="canonical" href="https://0xelitesystem.github.io/electron-release-matrix-auditor/">
+<meta property="og:title" content="Electron Release Matrix Auditor">
+<meta property="og:description" content="Paste a GitHub Actions workflow. See which release artifacts the matrix legs will fight over and whether two legs can create two draft releases for one tag.">
+<meta property="og:url" content="https://0xelitesystem.github.io/electron-release-matrix-auditor/">
+<meta name="twitter:card" content="summary">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Electron Release Matrix Auditor","applicationCategory":"DeveloperApplication","operatingSystem":"Any (browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://0xelitesystem.github.io/electron-release-matrix-auditor/","author":{"@type":"Person","name":"0xelitesystem","url":"https://elitesystem.ai"}}
+</script>
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0a0a0a; --bg-deep:#050505; --surface:#111110; --surface-2:#161614;
+  --ink:#e8e8e3; --ink-soft:#a8a8a3; --muted:#6e6e68; --rule:#1f1f1d; --rule-2:#2a2a27;
+  --accent:#d4ff3a; --accent-2:#ffb454; --accent-soft:rgba(212,255,58,0.12);
+  --on-accent:#0a0a0a; --code-bg:#111110;
+  --ok:#7ddc7d; --warn:#ffb454; --err:#ff6450; --info:#6fd3e0;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0a0a0a; --bg-deep:#050505; --surface:#111110; --surface-2:#161614;
+  --ink:#e8e8e3; --ink-soft:#a8a8a3; --muted:#6e6e68; --rule:#1f1f1d; --rule-2:#2a2a27;
+  --accent:#d4ff3a; --accent-2:#ffb454; --accent-soft:rgba(212,255,58,0.12);
+  --on-accent:#0a0a0a; --code-bg:#111110;
+  --ok:#7ddc7d; --warn:#ffb454; --err:#ff6450; --info:#6fd3e0;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#e8ebef; --bg-deep:#f4f5f8; --surface:#dee2e8; --surface-2:#d3d7df;
+  --ink:#0a0a0a; --ink-soft:#2a2a27; --muted:#6e6e68; --rule:#c8cdd5; --rule-2:#aab0ba;
+  --accent:#2d6b00; --accent-2:#8a4d00; --accent-soft:rgba(45,107,0,0.08);
+  --on-accent:#ffffff; --code-bg:#dee2e8;
+  --ok:#1a5c2e; --warn:#8a4d00; --err:#a82d14; --info:#0f5c60;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme: light;
+    --bg:#e8ebef; --bg-deep:#f4f5f8; --surface:#dee2e8; --surface-2:#d3d7df;
+    --ink:#0a0a0a; --ink-soft:#2a2a27; --muted:#6e6e68; --rule:#c8cdd5; --rule-2:#aab0ba;
+    --accent:#2d6b00; --accent-2:#8a4d00; --accent-soft:rgba(45,107,0,0.08);
+    --on-accent:#ffffff; --code-bg:#dee2e8;
+    --ok:#1a5c2e; --warn:#8a4d00; --err:#a82d14; --info:#0f5c60;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:940px;margin:0 auto;padding:22px 16px 64px}
+a{color:var(--accent)}
+a:hover{color:var(--accent-2)}
+h1,h2,h3{line-height:1.2;margin:0 0 .4em}
+h1{font-size:clamp(21px,4.6vw,30px);letter-spacing:-.01em}
+h2{font-size:clamp(17px,3.4vw,20px);margin-top:2.1em;padding-bottom:.35em;border-bottom:1px solid var(--rule)}
+h3{font-size:14px;margin-top:1.5em;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em}
+p{margin:0 0 .9em}
+code,pre,kbd{font-family:var(--mono)}
+code{font-size:.88em;background:var(--code-bg);border:1px solid var(--rule);border-radius:3px;padding:.08em .32em;word-break:break-word}
+pre{background:var(--code-bg);border:1px solid var(--rule);border-radius:6px;padding:12px;overflow-x:auto;font-size:12.5px;line-height:1.5;margin:0 0 .9em;max-width:100%}
+pre code{background:none;border:0;padding:0;font-size:inherit;word-break:normal}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tagline{color:var(--ink-soft);margin:0 0 1.1em;font-size:15px}
+button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:5px;border:1px solid var(--rule-2);
+  background:var(--surface-2);color:var(--ink);padding:8px 13px;line-height:1.2}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:650}
+button.primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:var(--on-accent)}
+button.mini{font-size:12.5px;padding:5px 9px}
+#theme{white-space:nowrap}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px;margin:0 0 16px}
+textarea{width:100%;min-height:230px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.5;
+  background:var(--bg-deep);color:var(--ink);border:1px solid var(--rule-2);border-radius:6px;padding:10px}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.hint{color:var(--ink-soft);font-size:12.5px;margin:8px 0 0}
+.samples{margin-top:12px;padding-top:12px;border-top:1px dashed var(--rule-2)}
+.samples .lbl{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em}
+.verdict{border-left:3px solid var(--rule-2);padding:8px 0 8px 13px;margin:0 0 16px;font-size:15px;color:var(--ink-soft)}
+.verdict.clean{border-color:var(--ok)}
+.verdict.hit{border-color:var(--err)}
+.verdict.none{border-color:var(--muted)}
+.verdict b{font-family:var(--mono);font-size:14.5px;color:var(--ink);font-weight:650}
+.finding{border:1px solid var(--rule);border-left-width:3px;border-radius:6px;background:var(--surface);padding:13px 14px;margin:0 0 14px}
+.finding.high{border-left-color:var(--err)}
+.finding.med{border-left-color:var(--warn)}
+.finding.info{border-left-color:var(--info)}
+.finding h3{margin:0 0 .55em;color:var(--ink);text-transform:none;letter-spacing:0;font-size:16px;font-weight:650}
+.finding .sev{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid currentColor;margin-right:8px;vertical-align:2px}
+.sev.high{color:var(--err)} .sev.med{color:var(--warn)} .sev.info{color:var(--info)}
+.finding p:last-child,.finding ul:last-child{margin-bottom:0}
+.finding ul{margin:.2em 0 .9em;padding-left:20px}
+.finding li{margin-bottom:.25em}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--rule);border-radius:6px;margin:0 0 14px;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{background:var(--surface-2);font-weight:650;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+tr.bad td{background:var(--accent-soft)}
+.flag{color:var(--err);font-weight:650}
+.dim{color:var(--ink-soft)}
+.err{border:1px solid var(--err);border-left-width:3px;border-radius:6px;padding:12px 14px;margin:0 0 16px;background:var(--surface)}
+.err b{color:var(--err)}
+.err p:last-child{margin-bottom:0}
+.err.bail{border-color:var(--warn)}
+.err.bail b{color:var(--warn)}
+.quote{margin:0 0 1.3em}
+.quote .src{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:0 0 6px}
+.quote .src b{color:var(--ink-soft);font-weight:600}
+.runner-tbl input,.runner-tbl select{font-family:var(--mono);font-size:12.5px;background:var(--bg-deep);color:var(--ink);
+  border:1px solid var(--rule-2);border-radius:4px;padding:4px 6px;max-width:100%}
+.runner-tbl input{width:148px}
+.stamp{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule-2);
+  border-radius:3px;padding:2px 6px;margin-left:6px;vertical-align:3px;white-space:nowrap}
+.chan{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:13px;color:var(--ink-soft)}
+.chan input{font-family:var(--mono);font-size:13px;width:110px;background:var(--bg-deep);color:var(--ink);
+  border:1px solid var(--rule-2);border-radius:4px;padding:5px 7px}
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-soft)}
+footer a{margin-right:14px;display:inline-block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <h1>Electron Release Matrix Auditor</h1>
+  <button id="theme" type="button" aria-label="Toggle colour theme">theme</button>
+</div>
+
+<p class="tagline">Paste a GitHub Actions workflow. It reports which release artifacts the matrix legs will
+fight over, and whether two legs can create two draft releases for one tag.</p>
+
+<p>An Electron release matrix fails quietly. Every leg exits 0, every step is green, and the release page
+looks fine right up until someone tries to auto-update. Two things go wrong. First,
+<code>electron-builder --publish always</code> resolves the release with a read-then-create that holds no
+lock, so two runners that both look before either creates will both create, and GitHub accepts two drafts
+carrying one tag name because a draft has no git tag yet. Second, two legs on the same platform write the
+same update manifest name, and the second upload deletes the first one's copy and takes its place. This
+page derives both from the publisher source, on your workflow, in your browser.</p>
+
+<div class="card">
+  <label class="sr" for="src">Workflow YAML</label>
+  <textarea id="src" spellcheck="false" placeholder="Paste the contents of .github/workflows/release.yml here"></textarea>
+  <div class="row">
+    <button id="run" class="primary" type="button">Analyse workflow</button>
+    <button id="clear" type="button">Clear</button>
+  </div>
+  <div class="samples">
+    <div class="row" style="margin-top:0">
+      <span class="lbl">real:</span>
+      <button id="s-before" type="button">before (broken)</button>
+      <button id="s-after" type="button">after (fixed)</button>
+    </div>
+    <div class="row">
+      <span class="lbl">synthetic:</span>
+      <button id="s-arch" class="mini" type="button">arch-split matrix</button>
+      <button id="s-dyn" class="mini" type="button">dynamic matrix</button>
+      <button id="s-soft" class="mini" type="button">softprops publisher</button>
+    </div>
+    <p class="hint">The two "real" buttons load this account owner's own release workflows: the one that produced
+    two draft releases for a single tag, and the two-job rewrite that fixed it. Same tool, same author, one
+    broken and one clean. The synthetic ones exist only because the arch-split and dynamic-matrix paths never
+    fired on his repos, and an analyser you cannot see fail is not worth much.</p>
+  </div>
+</div>
+
+<div id="out" aria-live="polite"></div>
+
+<h2>Runner label to platform and arch</h2>
+<p>The analyser reads this table only when a leg carries no explicit architecture, that is, when the matrix
+has no <code>arch</code> key and the <code>electron-builder</code> command line has no <code>--x64</code>,
+<code>--arm64</code>, <code>--ia32</code>, <code>--armv7l</code> or <code>--universal</code> flag. An
+explicit arch always wins over the table. Edit any row; the values are yours, they persist in this browser,
+and a label that is not listed is reported as unknown rather than guessed.
+<span class="stamp">verified as of 2026-08</span></p>
+<div class="tblwrap runner-tbl">
+  <table>
+    <thead><tr><th>runs-on label</th><th>platform</th><th>arch</th><th></th></tr></thead>
+    <tbody id="runners"></tbody>
+  </table>
+</div>
+<div class="row" style="margin-top:0">
+  <button id="addrunner" class="mini" type="button">Add row</button>
+  <button id="resetrunners" class="mini" type="button">Reset to defaults</button>
+</div>
+
+<h2>Where the manifest names come from</h2>
+<p>The grid below is not a lookup table. It is generated on this page by the two functions ported from
+<code>updateInfoBuilder.ts</code>, run over every platform and arch pair, so it stays correct for inputs
+nobody anticipated. Change the channel and watch every name change with it.</p>
+<div class="chan">
+  <label for="channel">channel</label>
+  <input id="channel" value="latest" spellcheck="false">
+  <span class="dim" id="gridsummary"></span>
+</div>
+<div class="tblwrap">
+  <table>
+    <thead><tr><th>platform</th><th>arch</th><th class="mono">update manifest</th><th>shared with</th></tr></thead>
+    <tbody id="grid"></tbody>
+  </table>
+</div>
+<p>Two names are produced by more than one pair, and both are highlighted above. The mac one is well known.
+The Windows one is the interesting half: <code>latest.yml</code> is written by <code>win/x64</code> and by
+<code>win/arm64</code>, because the OS suffix is empty for Windows and the arch prefix is empty for
+everything that is not Linux. Arm Windows runners are generally available now, so an
+<code>[windows-latest, windows-11-arm]</code> matrix is an ordinary thing to write, and it silently leaves
+one of the two architectures unreachable by auto-update.</p>
+
+<h2>The source this is derived from</h2>
+
+<h3>1. The manifest name</h3>
+<div class="quote">
+  <p class="src">electron-builder, <b>packages/app-builder-lib/src/publish/updateInfoBuilder.ts</b>, lines 65 to 75,
+  functions <b>getUpdateInfoFileName</b> and <b>getArchPrefixForUpdateFile</b></p>
+<pre><code>function getUpdateInfoFileName(channel: string, packager: PlatformPackager&lt;any&gt;, arch: Arch | null): string {
+  const osSuffix = packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
+  return `${channel}${osSuffix}${getArchPrefixForUpdateFile(arch, packager)}.yml`
+}
+
+function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackager&lt;any&gt;) {
+  if (arch == null || arch === Arch.x64 || packager.platform !== Platform.LINUX) {
+    return ""
+  }
+  return arch === Arch.armv7l ? "-arm" : `-${Arch[arch]}`
+}</code></pre>
+  <p>Read the second function as one sentence: the architecture is dropped from the file name unless the
+  platform is Linux. Every mac arch therefore lands on <code>latest-mac.yml</code>, and both Windows arches
+  land on <code>latest.yml</code>.</p>
+</div>
+
+<h3>2. What happens when two legs write the same name</h3>
+<div class="quote">
+  <p class="src">electron-builder, <b>packages/electron-publish/src/gitHubPublisher.ts</b>, lines 145 to 155,
+  method <b>overwriteArtifact</b></p>
+<pre><code>  private async overwriteArtifact(fileName: string, release: Release) {
+    // delete old artifact and re-upload
+    log.warn({ file: fileName, reason: "already exists on GitHub" }, "overwrite published file")
+
+    const assets = await this.githubRequest&lt;Array&lt;Asset&gt;&gt;(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
+    for (const asset of assets) {
+      if (asset.name === fileName) {
+        await this.githubRequest&lt;void&gt;(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset.id}`, this.token, null, "DELETE")
+        return
+      }
+    }</code></pre>
+  <p>That is a warning, not an error. The losing leg's manifest is deleted and replaced, the step exits 0,
+  and the release page still shows every installer. Only the manifest, the file the updater actually reads,
+  has lost an architecture.</p>
+</div>
+
+<h3>3. The draft race</h3>
+<div class="quote">
+  <p class="src">electron-builder, <b>packages/electron-publish/src/gitHubPublisher.ts</b>, lines 79 to 94,
+  method <b>getOrCreateRelease</b></p>
+<pre><code>  private async getOrCreateRelease(): Promise&lt;Release | null&gt; {
+    const logFields = {
+      tag: this.tag,
+      version: this.version,
+    }
+
+    // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
+    const releases = await this.githubRequest&lt;Array&lt;Release&gt;&gt;(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
+    for (const release of releases) {
+      if (!(release.tag_name === this.tag || release.tag_name === this.version)) {
+        continue
+      }
+
+      if (release.draft) {
+        return release
+      }</code></pre>
+  <p>That comment is the whole mechanism. A draft release has no git tag behind it, so GitHub treats
+  <code>tag_name</code> on a draft as a plain string field and is happy to hold two drafts that carry the same
+  one. The list call above is the "read" half of a read-then-create with nothing between the halves.</p>
+</div>
+<div class="quote">
+  <p class="src">same file, lines 126 to 136, the "create" half</p>
+<pre><code>    // https://github.com/electron-userland/electron-builder/issues/1835
+    if (this.options.publish === "always" || getCiTag() != null) {
+      log.info(
+        {
+          reason: "release doesn't exist",
+          ...logFields,
+        },
+        `creating GitHub release`
+      )
+      return this.createRelease()
+    }</code></pre>
+  <p>Note the second half of that condition. <code>getCiTag() != null</code> means a tag-triggered workflow
+  takes this branch even without <code>--publish always</code>, which is why this page also flags
+  a leg whose <code>--publish</code> flag is <code>onTag</code>, and a leg carrying no <code>--publish</code>
+  flag at all, whenever the workflow is triggered by <code>push: tags:</code>.</p>
+</div>
+<div class="quote">
+  <p class="src">same file, lines 225 to 236, method <b>createRelease</b></p>
+<pre><code>  private createRelease() {
+    const data: Record&lt;string, any&gt; = {
+      tag_name: this.tag,
+      name: this.releaseName || this.version,
+      draft: this.releaseType === "draft",
+      prerelease: this.releaseType === "prerelease",
+    }
+    if (this.releaseBody) {
+      data.body = trimStringWithWarn(this.releaseBody, 100000, "release body exceeds GitHub API limit, truncating")
+    }
+    return this.githubRequest&lt;Release&gt;(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, data)
+  }</code></pre>
+  <p>A bare POST. No conditional request, no idempotency key, no retry-and-reconcile. Both losers of the race
+  get an HTTP 201.</p>
+</div>
+<div class="quote">
+  <p class="src">same file, lines 215 to 223 (definition) and lines 202 to 203 (its only call site)</p>
+<pre><code>  private doesErrorMeanAlreadyExists(e: any) {
+    if (!e.description) {
+      return false
+    }
+    const desc = e.description
+    const descIncludesAlreadyExists =
+      (desc.includes("errors") &amp;&amp; desc.includes("already_exists")) || (desc.errors &amp;&amp; desc.errors.length &gt;= 1 &amp;&amp; desc.errors[0].code === "already_exists")
+    return e.statusCode === 422 &amp;&amp; descIncludesAlreadyExists
+  }</code></pre>
+<pre><code>        } else if (this.doesErrorMeanAlreadyExists(e)) {
+          return this.overwriteArtifact(fileName, release).then(() =&gt; this.doUploadFile(attemptNumber + 1, parsedUrl, fileName, dataLength, requestProcessor, release))</code></pre>
+  <p>The 422 already-exists handler does exist. It is wired into the asset upload path only, and that call
+  site at line 202 is the only one in the file. Release creation has no 422 handling at all, which is a
+  smaller problem than it sounds, because creation does not get a 422 here: two drafts on one tag name are
+  legal, so both creations simply succeed.</p>
+</div>
+
+<h3>4. Why the same pattern is safe under softprops/action-gh-release</h3>
+<div class="quote">
+  <p class="src">softprops/action-gh-release, <b>src/github.ts</b>, lines 1111 to 1118, inside
+  <b>createRelease</b></p>
+<pre><code>      case 422:
+        // Check if this is a race condition with "already_exists" error
+        if (hasValidationErrorCode(error, 'already_exists')) {
+          console.log(
+            'Release already exists (race condition detected), retrying to find and update existing release...',
+          );
+          // Don't throw - allow retry to find existing release
+        } else {</code></pre>
+  <p class="hint">One emoji character has been dropped from the quoted console string above so this page stays
+  pure ASCII. Nothing else is changed.</p>
+</div>
+<div class="quote">
+  <p class="src">same file, line 637, inside <b>release</b>; and lines 950 to 964, function
+  <b>cleanupCreatedDuplicateDraftRelease</b></p>
+<pre><code>    _release = await findTagFromReleases(releaser, owner, repo, tag, maxRetries);</code></pre>
+<pre><code>async function cleanupCreatedDuplicateDraftRelease(
+  releaser: Releaser,
+  owner: string,
+  repo: string,
+  tag: string,
+  canonicalReleaseId: number,
+  createdRelease: Release,
+): Promise&lt;void&gt; {
+  if (
+    createdRelease.id === canonicalReleaseId ||
+    !createdRelease.draft ||
+    createdRelease.assets.length &gt; 0
+  ) {
+    return;
+  }</code></pre>
+  <p>That action retries into the existing release on a 422, and it has a function whose entire job is to
+  delete the duplicate draft it just created. It was written by somebody who hit this race. That is exactly
+  why the draft-race finding on this page fires for <code>electron-builder</code> and stays silent for
+  <code>softprops/action-gh-release</code>. An auditor that flags every parallel Electron release workflow is
+  an auditor nobody keeps installed.</p>
+</div>
+
+<h3>5. The second-order trap: gh release view is a coin flip</h3>
+<div class="quote">
+  <p class="src">cli/cli, <b>pkg/cmd/release/shared/fetch.go</b>, lines 192 to 221, function
+  <b>FetchRelease</b></p>
+<pre><code>func FetchRelease(ctx context.Context, httpClient *http.Client, repo ghrepo.Interface, tagName string) (*Release, error) {
+	publishedURL, err := safeurl.JoinPathWithHostPrefix(ghinstance.RESTPrefix(repo.RepoHost()), "repos", repo.RepoOwner(), repo.RepoName(), "releases", "tags", tagName)
+	if err != nil {
+		return nil, err
+	}
+
+	cc, cancel := context.WithCancel(ctx)
+	results := make(chan fetchResult, 2)
+
+	// published release lookup
+	go func() {
+		release, err := fetchReleasePath(cc, httpClient, publishedURL)
+		results &lt;- fetchResult{release: release, error: err}
+	}()
+
+	// draft release lookup
+	go func() {
+		release, err := fetchDraftRelease(cc, httpClient, repo, tagName)
+		results &lt;- fetchResult{release: release, error: err}
+	}()
+
+	// Prefer a release found by either lookup. A single failed lookup, such as
+	// the draft lookup when unauthenticated, must not mask a release found by
+	// the other; only report an error when both lookups fail.
+	first := &lt;-results
+	if first.error == nil {
+		cancel()
+		&lt;-results // drain the channel
+		return first.release, nil
+	}</code></pre>
+  <p>Two goroutines, a two-slot buffered channel, and <code>first := &lt;-results</code>. Whichever HTTP round
+  trip returns first wins and the other is cancelled and drained. That is not ambiguity in the docs, it is
+  non-determinism in the code, and it is the tool you reach for to check what the workflow just did.</p>
+</div>
+<div class="quote">
+  <p class="src">same file, lines 247 to 255, function <b>fetchDraftRelease</b></p>
+<pre><code>	// First use GraphQL to find a draft release by pending tag name, since REST doesn't have this ability.
+	var query struct {
+		Repository struct {
+			Release *struct {
+				DatabaseID int64
+				IsDraft    bool
+			} `graphql:"release(tagName: $tagName)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}</code></pre>
+  <p>And the draft lookup asks GraphQL for <code>release(tagName:)</code>, singular. One release comes back.
+  If your matrix produced two drafts for that tag, the second one is not merely deprioritised by
+  <code>gh</code>, it is invisible to it. You will go looking on the web UI, find both, and wonder why the
+  command line only ever showed you one.</p>
+</div>
+
+<h2>How the analyser decides</h2>
+<p><b>Legs.</b> A leg is one matrix combination of one job that actually runs <code>electron-builder</code>.
+A job with no matrix is one leg. A publish-only job that just calls <code>gh release upload</code> produces
+no update manifests, so it is listed but not counted as a leg. That is why the fixed two-job workflow reports
+two legs and not three.</p>
+<p><b>Draft race.</b> Fires only when two or more legs run <code>electron-builder</code> in a mode that
+reaches <code>createRelease()</code>, which is <code>--publish always</code>, or any non-<code>never</code>
+mode on a tag-triggered workflow. It does not fire for <code>softprops/action-gh-release</code> or for
+<code>--publish never</code>. The finding is publisher-specific on purpose.</p>
+<p><b>Manifest overwrite.</b> Publisher-independent. Two legs deriving the same update manifest name collide
+regardless of who uploads, because both electron-builder and softprops resolve the conflict by deleting the
+existing asset and uploading over it.</p>
+<p><b>What it will not do.</b> It does not resolve <code>fromJson</code> matrices built from another job's
+output, and says so rather than guessing. It does not read your <code>package.json</code>, so it cannot know
+your product name, version, channel, or configured <code>build.win.target</code> arches; installer file names
+are therefore out of scope and only update manifests are analysed. It does not follow reusable workflows
+called with <code>uses:</code> at job level. It parses a practical subset of YAML, not all of it: anchors,
+aliases, merge keys, multi-document streams and explicit tags are not supported.</p>
+
+<h2>Notes on the linked issues</h2>
+<p>The mac half of this has a paper trail.
+<a href="https://github.com/electron-userland/electron-builder/issues/5592">Issue 5592</a> is the one people
+find. It is worth being precise about its status: it is closed, closed by the reporter himself two days after
+filing, and it kept collecting comments for years afterwards. A closed-but-unfixed zombie is worse than an
+open issue, because search engines and maintainers both read the green "closed" badge as resolved.
+<a href="https://github.com/electron-userland/electron-builder/issues/6676">Issue 6676</a> and
+<a href="https://github.com/electron-userland/electron-builder/issues/6643">issue 6643</a> cover neighbouring
+ground. The Windows <code>latest.yml</code> collision, which falls straight out of the function quoted at the
+top of this page, has no issue at all that this author could find.</p>
+
+<footer>
+  <a href="https://elitesystem.ai">elitesystem.ai</a>
+  <a href="https://github.com/0xelitesystem/electron-release-matrix-auditor">source</a>
+  <a href="https://0xelitesystem.github.io/">catalog</a>
+</footer>
+
+</div>
+<script>
+"use strict";
+(function () {
+
+/* ------------------------------------------------------------------ *
+ * theme
+ * ------------------------------------------------------------------ */
+var THEME_KEY = "ermat.theme";
+function applyTheme(t) {
+  if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+try { applyTheme(localStorage.getItem(THEME_KEY)); } catch (e) {}
+function currentTheme() {
+  var a = document.documentElement.getAttribute("data-theme");
+  if (a) return a;
+  return (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+}
+document.getElementById("theme").addEventListener("click", function () {
+  var next = currentTheme() === "dark" ? "light" : "dark";
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+});
+
+/* ------------------------------------------------------------------ *
+ * YAML subset parser
+ * Handles: nested maps, block sequences, sequences of maps, flow maps,
+ * flow sequences, quoted scalars, block scalars, comments.
+ * Not handled (and not silently faked): anchors, aliases, merge keys,
+ * multi-document streams, explicit tags.
+ * ------------------------------------------------------------------ */
+function YamlError(msg, line) { this.name = "YamlError"; this.message = msg; this.line = line; }
+YamlError.prototype = Object.create(Error.prototype);
+
+function indentOf(s) { return s.match(/^ */)[0].length; }
+function isSkippable(s) { return !s.trim() || /^\s*#/.test(s); }
+
+function stripComment(s) {
+  var q = null, out = "";
+  for (var i = 0; i < s.length; i++) {
+    var c = s[i];
+    if (q) { out += c; if (c === q) q = null; continue; }
+    if (c === '"' || c === "'") { q = c; out += c; continue; }
+    if (c === "#" && (i === 0 || /\s/.test(s[i - 1]))) break;
+    out += c;
+  }
+  return out.replace(/\s+$/, "");
+}
+
+function unquote(s) {
+  s = s.trim();
+  if (s.length >= 2) {
+    var a = s.charAt(0), b = s.charAt(s.length - 1);
+    if ((a === '"' && b === '"') || (a === "'" && b === "'")) return s.slice(1, -1);
+  }
+  return s;
+}
+
+function splitFlow(body) {
+  var parts = [], depth = 0, q = null, cur = "";
+  for (var i = 0; i < body.length; i++) {
+    var c = body[i];
+    if (q) { cur += c; if (c === q) q = null; continue; }
+    if (c === '"' || c === "'") { q = c; cur += c; continue; }
+    if (c === "[" || c === "{") { depth++; cur += c; continue; }
+    if (c === "]" || c === "}") { depth--; cur += c; continue; }
+    if (c === "," && depth === 0) { parts.push(cur); cur = ""; continue; }
+    cur += c;
+  }
+  if (cur.trim() !== "") parts.push(cur);
+  return parts;
+}
+
+function parseScalar(s) {
+  s = s.trim();
+  if (s === "") return null;
+  if (s.charAt(0) === "[" && s.charAt(s.length - 1) === "]") return splitFlow(s.slice(1, -1)).map(parseScalar);
+  if (s.charAt(0) === "{" && s.charAt(s.length - 1) === "}") {
+    var o = {};
+    splitFlow(s.slice(1, -1)).forEach(function (p) {
+      var k = p.indexOf(":");
+      if (k < 0) { o[unquote(p)] = null; return; }
+      o[unquote(p.slice(0, k))] = parseScalar(p.slice(k + 1));
+    });
+    return o;
+  }
+  var u = unquote(s);
+  if (u === s) {
+    if (s === "true") return true;
+    if (s === "false") return false;
+    if (s === "null" || s === "~") return null;
+  }
+  return u;
+}
+
+function isMapStart(s) { return /^("[^"]*"|'[^']*'|[^:\s][^:]*?)\s*:(\s|$)/.test(s); }
+
+function parseBlockScalar(st, keyIndent) {
+  var buf = [], minInd = null;
+  while (st.i < st.lines.length) {
+    var l = st.lines[st.i];
+    if (!l.trim()) { buf.push(""); st.i++; continue; }
+    var ci = indentOf(l);
+    if (ci <= keyIndent) break;
+    if (minInd === null || ci < minInd) minInd = ci;
+    buf.push(l);
+    st.i++;
+  }
+  while (buf.length && buf[buf.length - 1] === "") buf.pop();
+  if (minInd === null) return "";
+  return buf.map(function (l) { return l === "" ? "" : l.slice(minInd); }).join("\n");
+}
+
+function skip(st) { while (st.i < st.lines.length && isSkippable(st.lines[st.i])) st.i++; }
+
+function parseChild(st, parentIndent) {
+  skip(st);
+  if (st.i >= st.lines.length) return null;
+  var l = st.lines[st.i], cur = indentOf(l);
+  if (cur > parentIndent) return parseBlock(st, cur);
+  if (cur === parentIndent && /^-(\s|$)/.test(l.trim())) return parseSeq(st, cur);
+  return null;
+}
+
+function parseBlock(st, ind) {
+  skip(st);
+  if (st.i >= st.lines.length) return null;
+  if (/^-(\s|$)/.test(st.lines[st.i].trim())) return parseSeq(st, ind);
+  return parseMap(st, ind);
+}
+
+function parseMap(st, ind) {
+  var obj = {};
+  for (;;) {
+    skip(st);
+    if (st.i >= st.lines.length) break;
+    var l = st.lines[st.i], cur = indentOf(l);
+    if (cur < ind) break;
+    if (cur > ind) { st.i++; continue; }
+    var t = stripComment(l.trim());
+    if (/^-(\s|$)/.test(t)) break;
+    var m = t.match(/^("[^"]*"|'[^']*'|[^:]+?)\s*:(\s+.*|)$/);
+    if (!m) { st.i++; continue; }
+    var key = unquote(m[1]), rest = m[2].trim();
+    st.i++;
+    if (rest === "") obj[key] = parseChild(st, ind);
+    else if (/^[|>][-+]?\d*$/.test(rest)) obj[key] = parseBlockScalar(st, ind);
+    else obj[key] = parseScalar(rest);
+  }
+  return obj;
+}
+
+function parseSeq(st, ind) {
+  var arr = [];
+  for (;;) {
+    skip(st);
+    if (st.i >= st.lines.length) break;
+    var l = st.lines[st.i], cur = indentOf(l);
+    if (cur !== ind) break;
+    var t = l.trim();
+    if (!/^-(\s|$)/.test(t)) break;
+    var rest = stripComment(t.slice(1).trim());
+    if (rest === "") { st.i++; arr.push(parseChild(st, ind)); continue; }
+    if (isMapStart(rest)) {
+      var dash = l.indexOf("-");
+      st.lines[st.i] = l.slice(0, dash) + " " + l.slice(dash + 1);
+      var bodyCol = indentOf(st.lines[st.i]);
+      arr.push(parseMap(st, bodyCol));
+      continue;
+    }
+    st.i++;
+    arr.push(parseScalar(rest));
+  }
+  return arr;
+}
+
+/* The README promises a parse failure rather than a guess on constructs this
+ * subset parser does not model. Detect them before parsing, because silently
+ * parsing an alias-defined matrix produced a clean verdict for a workflow that
+ * really had two legs and a real draft race. Block scalar bodies are skipped:
+ * a run: | script may legitimately contain * or << and is not YAML. */
+function checkUnsupported(lines) {
+  var inBlock = false, blockIndent = 0, sawContent = false, i, raw, line, ind, val;
+  for (i = 0; i < lines.length; i++) {
+    raw = lines[i];
+    if (raw.trim() === "") continue;
+    ind = indentOf(raw);
+    if (inBlock) {
+      if (ind > blockIndent) continue;
+      inBlock = false;
+    }
+    line = raw.replace(/\s+#.*$/, "");
+    if (/^\s*#/.test(line)) continue;
+    if (/^---\s*$/.test(line.trim()) || /^---\s+\S/.test(line.trim())) {
+      if (sawContent) {
+        throw new YamlError("This file contains more than one YAML document. " +
+          "A workflow file must be a single document, and this parser reads only the first, " +
+          "so the analysis would be incomplete.", i + 1);
+      }
+      continue;
+    }
+    sawContent = true;
+    if (/^\s*<<\s*:/.test(line)) {
+      throw new YamlError("Merge keys (<<:) are not supported. The merged matrix would not be " +
+        "visible to this parser, so any result would be a guess.", i + 1);
+    }
+    val = line.match(/^\s*(?:-\s+)?(?:[^:#\s][^:#]*:\s+|-\s+)?(\S.*)$/);
+    val = val ? val[1].trim() : "";
+    if (/^&[A-Za-z0-9_.\/-]+/.test(val)) {
+      throw new YamlError("YAML anchors (&name) are not supported. This parser does not resolve " +
+        "them, so a matrix defined through an anchor would be misread.", i + 1);
+    }
+    if (/^\*[A-Za-z0-9_.\/-]+\s*$/.test(val)) {
+      throw new YamlError("YAML aliases (*name) are not supported. This parser does not resolve " +
+        "them, so a matrix defined through an alias would be silently read as empty.", i + 1);
+    }
+    if (/:\s*[|>][+-]?\d*\s*$/.test(line) || /^\s*-\s+[|>][+-]?\d*\s*$/.test(line)) {
+      inBlock = true; blockIndent = ind;
+    }
+  }
+}
+
+function parseYaml(text) {
+  if (typeof text !== "string" || text.trim() === "") throw new YamlError("The input is empty.");
+  var lines = text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ").split("\n");
+  checkUnsupported(lines);
+  var st = { lines: lines, i: 0 };
+  skip(st);
+  if (st.i >= lines.length) throw new YamlError("The input has no content, only blank lines and comments.");
+  var doc = parseBlock(st, indentOf(lines[st.i]));
+  if (doc === null || typeof doc !== "object" || Array.isArray(doc)) {
+    throw new YamlError("The top level of a workflow file must be a mapping with keys such as name, on and jobs.");
+  }
+  return doc;
+}
+
+/* ------------------------------------------------------------------ *
+ * ported from electron-builder updateInfoBuilder.ts lines 65 to 75
+ * ------------------------------------------------------------------ */
+var PLATFORMS = ["win", "mac", "linux"];
+var ARCHES = ["x64", "arm64", "armv7l", "ia32", "universal"];
+
+function getArchPrefixForUpdateFile(arch, platform) {
+  if (arch === null || arch === undefined || arch === "x64" || platform !== "linux") return "";
+  return arch === "armv7l" ? "-arm" : "-" + arch;
+}
+function getUpdateInfoFileName(channel, platform, arch) {
+  var osSuffix = platform === "win" ? "" : "-" + platform;
+  return channel + osSuffix + getArchPrefixForUpdateFile(arch, platform) + ".yml";
+}
+
+/* ------------------------------------------------------------------ *
+ * editable runs-on table
+ * ------------------------------------------------------------------ */
+var RUNNER_KEY = "ermat.runners";
+var DEFAULT_RUNNERS = [
+  ["ubuntu-latest", "linux", "x64"],
+  ["ubuntu-24.04", "linux", "x64"],
+  ["ubuntu-22.04", "linux", "x64"],
+  ["ubuntu-24.04-arm", "linux", "arm64"],
+  ["ubuntu-22.04-arm", "linux", "arm64"],
+  ["windows-latest", "win", "x64"],
+  ["windows-2025", "win", "x64"],
+  ["windows-2022", "win", "x64"],
+  ["windows-11-arm", "win", "arm64"],
+  ["macos-latest", "mac", "arm64"],
+  ["macos-15", "mac", "arm64"],
+  ["macos-14", "mac", "arm64"],
+  ["macos-13", "mac", "x64"]
+];
+var runners = [];
+
+function loadRunners() {
+  try {
+    var raw = localStorage.getItem(RUNNER_KEY);
+    if (raw) {
+      var v = JSON.parse(raw);
+      if (Array.isArray(v) && v.length) {
+        runners = v.filter(function (r) { return Array.isArray(r) && r.length === 3; })
+                   .map(function (r) { return [String(r[0]), String(r[1]), String(r[2])]; });
+        if (runners.length) return;
+      }
+    }
+  } catch (e) {}
+  runners = DEFAULT_RUNNERS.map(function (r) { return r.slice(); });
+}
+function saveRunners() { try { localStorage.setItem(RUNNER_KEY, JSON.stringify(runners)); } catch (e) {} }
+function lookupRunner(label) {
+  if (!label) return null;
+  var k = String(label).trim().toLowerCase();
+  for (var i = 0; i < runners.length; i++) {
+    if (runners[i][0].trim().toLowerCase() === k) return { platform: runners[i][1], arch: runners[i][2] };
+  }
+  return null;
+}
+
+function el(tag, attrs, kids) {
+  var n = document.createElement(tag);
+  if (attrs) Object.keys(attrs).forEach(function (k) {
+    if (k === "class") n.className = attrs[k];
+    else if (k === "text") n.textContent = attrs[k];
+    else if (k === "html") n.innerHTML = attrs[k];
+    else n.setAttribute(k, attrs[k]);
+  });
+  (kids || []).forEach(function (c) { n.appendChild(c); });
+  return n;
+}
+
+function renderRunners() {
+  var tb = document.getElementById("runners");
+  tb.textContent = "";
+  runners.forEach(function (r, idx) {
+    var tr = el("tr");
+    var lab = el("input", { value: r[0], spellcheck: "false", "aria-label": "runner label" });
+    lab.addEventListener("change", function () { runners[idx][0] = lab.value; saveRunners(); });
+    tr.appendChild(el("td", null, [lab]));
+
+    var ps = el("select", { "aria-label": "platform" });
+    ["win", "mac", "linux", "unknown"].forEach(function (p) {
+      var o = el("option", { value: p, text: p });
+      if (p === r[1]) o.selected = true;
+      ps.appendChild(o);
+    });
+    ps.addEventListener("change", function () { runners[idx][1] = ps.value; saveRunners(); });
+    tr.appendChild(el("td", null, [ps]));
+
+    var as = el("select", { "aria-label": "arch" });
+    ARCHES.concat(["unknown"]).forEach(function (a) {
+      var o = el("option", { value: a, text: a });
+      if (a === r[2]) o.selected = true;
+      as.appendChild(o);
+    });
+    as.addEventListener("change", function () { runners[idx][2] = as.value; saveRunners(); });
+    tr.appendChild(el("td", null, [as]));
+
+    var rm = el("button", { class: "mini", type: "button", text: "remove" });
+    rm.addEventListener("click", function () { runners.splice(idx, 1); saveRunners(); renderRunners(); });
+    tr.appendChild(el("td", null, [rm]));
+    tb.appendChild(tr);
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * live manifest grid
+ * ------------------------------------------------------------------ */
+function renderGrid() {
+  var channel = document.getElementById("channel").value.trim() || "latest";
+  var rows = [], byName = {};
+  PLATFORMS.forEach(function (p) {
+    ARCHES.forEach(function (a) {
+      var n = getUpdateInfoFileName(channel, p, a);
+      rows.push({ p: p, a: a, n: n });
+      (byName[n] = byName[n] || []).push(p + "/" + a);
+    });
+  });
+  var tb = document.getElementById("grid");
+  tb.textContent = "";
+  rows.forEach(function (r) {
+    var mates = byName[r.n].filter(function (x) { return x !== r.p + "/" + r.a; });
+    var tr = el("tr", mates.length ? { class: "bad" } : null);
+    tr.appendChild(el("td", { class: "mono", text: r.p }));
+    tr.appendChild(el("td", { class: "mono", text: r.a }));
+    tr.appendChild(el("td", { class: "mono", text: r.n }));
+    tr.appendChild(el("td", { class: "mono " + (mates.length ? "flag" : "dim"), text: mates.length ? mates.join(", ") : "nothing" }));
+    tb.appendChild(tr);
+  });
+  var names = Object.keys(byName);
+  var shared = names.filter(function (n) { return byName[n].length > 1; });
+  document.getElementById("gridsummary").textContent =
+    rows.length + " platform and arch pairs, " + names.length + " distinct manifest names, " +
+    shared.length + " of them written by more than one pair (" + shared.join(", ") + ")";
+}
+
+/* ------------------------------------------------------------------ *
+ * matrix expansion
+ * ------------------------------------------------------------------ */
+function isExpr(v) { return typeof v === "string" && v.indexOf("${" + "{") >= 0; }
+
+function expandMatrix(mx) {
+  if (mx === null || mx === undefined) return [{}];
+  if (typeof mx !== "object" || Array.isArray(mx)) return [{}];
+  var keys = Object.keys(mx).filter(function (k) { return k !== "include" && k !== "exclude"; });
+  var combos;
+  if (keys.length === 0 && Array.isArray(mx.include)) {
+    combos = mx.include.filter(function (o) { return o && typeof o === "object"; })
+                       .map(function (o) { var c = {}; Object.keys(o).forEach(function (k) { c[k] = o[k]; }); return c; });
+  } else {
+    combos = [{}];
+    keys.forEach(function (k) {
+      var vals = mx[k];
+      if (!Array.isArray(vals)) vals = [vals];
+      var next = [];
+      combos.forEach(function (c) {
+        vals.forEach(function (v) {
+          var n = {};
+          Object.keys(c).forEach(function (kk) { n[kk] = c[kk]; });
+          n[k] = v;
+          next.push(n);
+        });
+      });
+      combos = next;
+    });
+  }
+  if (Array.isArray(mx.exclude)) {
+    mx.exclude.forEach(function (ex) {
+      if (!ex || typeof ex !== "object") return;
+      combos = combos.filter(function (c) {
+        return !Object.keys(ex).every(function (k) { return String(c[k]) === String(ex[k]); });
+      });
+    });
+  }
+  if (keys.length > 0 && Array.isArray(mx.include)) {
+    mx.include.forEach(function (inc) {
+      if (!inc || typeof inc !== "object") return;
+      var merged = false;
+      combos.forEach(function (c) {
+        var ok = Object.keys(inc).every(function (k) {
+          return keys.indexOf(k) < 0 || String(c[k]) === String(inc[k]);
+        });
+        if (!ok) return;
+        Object.keys(inc).forEach(function (k) { if (keys.indexOf(k) < 0) c[k] = inc[k]; });
+        merged = true;
+      });
+      if (!merged) {
+        var n = {};
+        Object.keys(inc).forEach(function (k) { n[k] = inc[k]; });
+        combos.push(n);
+      }
+    });
+  }
+  return combos.length ? combos : [{}];
+}
+
+function interp(s, combo) {
+  return String(s).replace(/\$\{\{\s*matrix\.([A-Za-z0-9_.-]+)\s*\}\}/g, function (whole, k) {
+    var v = combo[k];
+    return (v === undefined || v === null || typeof v === "object") ? whole : String(v);
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * step and publisher detection
+ * ------------------------------------------------------------------ */
+var ARCH_FLAGS = { "--x64": "x64", "--arm64": "arm64", "--ia32": "ia32", "--armv7l": "armv7l", "--universal": "universal" };
+var PLAT_FLAGS = { "--win": "win", "--windows": "win", "--mac": "mac", "--macos": "mac", "--linux": "linux" };
+
+function normArch(v) {
+  var s = String(v).trim().toLowerCase();
+  if (s === "x86_64" || s === "amd64" || s === "x64") return "x64";
+  if (s === "aarch64" || s === "arm64") return "arm64";
+  if (s === "x86" || s === "ia32" || s === "i386") return "ia32";
+  if (s === "armv7l" || s === "arm" || s === "armhf") return "armv7l";
+  if (s === "universal") return "universal";
+  return null;
+}
+
+function stepsOf(job) { return Array.isArray(job.steps) ? job.steps.filter(function (s) { return s && typeof s === "object"; }) : []; }
+
+function ebStepsOf(steps) {
+  return steps.filter(function (s) {
+    return typeof s.run === "string" && /(^|[\s"'`(&|;])electron-builder(\s|$)/.test(s.run);
+  });
+}
+function publishModeOf(runStr) {
+  var m = runStr.match(/--publish[= ]+([A-Za-z]+)/);
+  if (m) return m[1].toLowerCase();
+  if (/(^|\s)-p[= ]+([A-Za-z]+)/.test(runStr)) return runStr.match(/(^|\s)-p[= ]+([A-Za-z]+)/)[2].toLowerCase();
+  return null;
+}
+function usesOf(steps) {
+  return steps.map(function (s) { return typeof s.uses === "string" ? s.uses : ""; }).filter(Boolean);
+}
+function jobPublishers(steps) {
+  var out = [];
+  usesOf(steps).forEach(function (u) {
+    if (/^softprops\/action-gh-release/.test(u)) out.push("softprops/action-gh-release");
+  });
+  steps.forEach(function (s) {
+    if (typeof s.run === "string" && /\bgh\s+release\s+(create|upload|edit)\b/.test(s.run)) out.push("gh release (cli)");
+  });
+  return out.filter(function (v, i, a) { return a.indexOf(v) === i; });
+}
+
+function tagTriggered(on) {
+  if (!on) return false;
+  var s = JSON.stringify(on);
+  return /"tags(-ignore)?"/.test(s) || /"tags"/.test(s);
+}
+
+/* ------------------------------------------------------------------ *
+ * the analysis
+ * ------------------------------------------------------------------ */
+function analyse(text) {
+  var doc = parseYaml(text);
+  var jobs = doc.jobs;
+  if (!jobs || typeof jobs !== "object" || Array.isArray(jobs)) {
+    throw new YamlError("No top-level jobs: mapping was found. This does not look like a GitHub Actions workflow.");
+  }
+  var jobIds = Object.keys(jobs);
+  if (!jobIds.length) throw new YamlError("The jobs: mapping is empty, so there is nothing to analyse.");
+
+  var onTag = tagTriggered(doc.on !== undefined ? doc.on : doc["true"]);
+  var legs = [], other = [], bail = null, unknown = [];
+
+  for (var ji = 0; ji < jobIds.length; ji++) {
+    var jobId = jobIds[ji], job = jobs[jobId];
+    if (!job || typeof job !== "object") continue;
+
+    var mx = job.strategy && job.strategy.matrix;
+    if (isExpr(mx) || (mx && typeof mx === "object" && (isExpr(mx.include) || isExpr(mx.exclude)))) {
+      bail = { jobId: jobId, expr: isExpr(mx) ? mx : (isExpr(mx.include) ? mx.include : mx.exclude) };
+      break;
+    }
+    if (mx && typeof mx === "object" && !Array.isArray(mx)) {
+      var dynKey = Object.keys(mx).filter(function (k) { return isExpr(mx[k]); })[0];
+      if (dynKey) { bail = { jobId: jobId, expr: mx[dynKey] }; break; }
+    }
+
+    var steps = stepsOf(job);
+    var ebs = ebStepsOf(steps);
+    var pubs = jobPublishers(steps);
+    var combos = expandMatrix(mx);
+
+    combos.forEach(function (combo, idx) {
+      var runsOnRaw = job["runs-on"];
+      var label = "";
+      if (Array.isArray(runsOnRaw)) {
+        var hit = runsOnRaw.map(function (x) { return interp(x, combo); })
+                           .filter(function (x) { return lookupRunner(x); })[0];
+        label = hit || runsOnRaw.map(function (x) { return interp(x, combo); }).join(", ");
+      } else if (runsOnRaw && typeof runsOnRaw === "object") {
+        var lb = runsOnRaw.labels;
+        label = Array.isArray(lb) ? lb.map(function (x) { return interp(x, combo); }).join(", ") : String(lb || "");
+      } else {
+        label = interp(runsOnRaw === undefined || runsOnRaw === null ? "" : runsOnRaw, combo);
+      }
+
+      var comboArch = null, comboArchSource = "";
+      ["arch", "architecture", "target-arch", "target_arch"].forEach(function (k) {
+        if (comboArch === null && combo[k] !== undefined) {
+          var na = normArch(combo[k]);
+          if (na) { comboArch = na; comboArchSource = "matrix." + k; }
+        }
+      });
+
+      var cmds = ebs.map(function (s) { return interp(s.run, combo); });
+      var flagArches = [], flagPlat = null, mode = null;
+      cmds.forEach(function (c) {
+        Object.keys(ARCH_FLAGS).forEach(function (f) {
+          if (new RegExp("(^|\\s)" + f + "(\\s|$)").test(c) && flagArches.indexOf(ARCH_FLAGS[f]) < 0) flagArches.push(ARCH_FLAGS[f]);
+        });
+        Object.keys(PLAT_FLAGS).forEach(function (f) {
+          if (new RegExp("(^|\\s)" + f + "(\\s|$)").test(c)) flagPlat = PLAT_FLAGS[f];
+        });
+        var m = publishModeOf(c);
+        if (m) mode = m;
+      });
+
+      var tbl = lookupRunner(label);
+      var platform = flagPlat || (tbl ? tbl.platform : null);
+      var archSource = "";
+      var arches;
+      if (flagArches.length) { arches = flagArches; archSource = "electron-builder flag"; }
+      else if (comboArch) { arches = [comboArch]; archSource = comboArchSource; }
+      else if (tbl && tbl.arch && tbl.arch !== "unknown") { arches = [tbl.arch]; archSource = "runner table"; }
+      else { arches = [null]; archSource = "unknown"; }
+
+      var effMode = mode;
+      if (ebs.length && !effMode) effMode = "unspecified";
+      var publishes = false;
+      if (ebs.length) {
+        if (effMode === "never") publishes = false;
+        else if (effMode === "always") publishes = true;
+        else publishes = onTag;
+      }
+
+      var rec = {
+        jobId: jobId,
+        legLabel: combos.length > 1 ? (jobId + " [" + Object.keys(combo).map(function (k) { return k + "=" + String(combo[k]); }).join(", ") + "]") : jobId,
+        runsOn: label || "(none)",
+        platform: platform,
+        arches: arches,
+        archSource: archSource,
+        mode: effMode,
+        publishes: publishes,
+        publishers: pubs,
+        hasEb: ebs.length > 0
+      };
+      if (ebs.length) {
+        if (!platform || platform === "unknown") unknown.push(rec);
+        legs.push(rec);
+      } else if (pubs.length) {
+        other.push(rec);
+      }
+    });
+  }
+
+  return { bail: bail, legs: legs, other: other, onTag: onTag, unknown: unknown, jobCount: jobIds.length };
+}
+
+/* ------------------------------------------------------------------ *
+ * rendering
+ * ------------------------------------------------------------------ */
+var out = document.getElementById("out");
+
+function showError(title, body, isBail) {
+  out.textContent = "";
+  var d = el("div", { class: "err" + (isBail ? " bail" : "") });
+  d.appendChild(el("p", null, [el("b", { text: title })]));
+  body.forEach(function (para) { d.appendChild(el("p", { html: para })); });
+  out.appendChild(d);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+function render(res) {
+  out.textContent = "";
+
+  if (res.bail) {
+    showError("Cannot analyse this workflow.", [
+      "Job <code>" + esc(res.bail.jobId) + "</code> builds its matrix from an expression: <code>" +
+        esc(String(res.bail.expr)) + "</code>.",
+      "That matrix does not exist in this file. It exists in the JSON that an earlier job prints to its outputs " +
+        "at run time, and that job has not run. There is no honest static answer here, so this tool refuses to " +
+        "invent one rather than analysing a matrix it cannot see.",
+      "To get an answer: open a completed run of this workflow, copy the expanded leg list from the run's job " +
+        "sidebar, write it back into this file as a static matrix, and paste that."
+    ], true);
+    return;
+  }
+
+  var legs = res.legs;
+  var channel = document.getElementById("channel").value.trim() || "latest";
+
+  /* manifest names per leg */
+  legs.forEach(function (l) {
+    l.manifests = [];
+    if (l.platform && l.platform !== "unknown") {
+      l.arches.forEach(function (a) {
+        var n = getUpdateInfoFileName(channel, l.platform, a);
+        if (l.manifests.indexOf(n) < 0) l.manifests.push(n);
+      });
+    }
+  });
+
+  var platforms = {};
+  legs.forEach(function (l) { if (l.platform) platforms[l.platform] = 1; });
+  var platCount = Object.keys(platforms).length;
+
+  /* collisions across legs */
+  var byManifest = {};
+  legs.forEach(function (l) {
+    l.manifests.forEach(function (n) { (byManifest[n] = byManifest[n] || []).push(l); });
+  });
+  var collisions = Object.keys(byManifest).filter(function (n) { return byManifest[n].length > 1; });
+
+  /* draft race */
+  var racing = legs.filter(function (l) { return l.publishes; });
+  var findings = [];
+
+  if (racing.length > 1) {
+    findings.push({
+      sev: "high",
+      title: plural(racing.length, "draft release") + " possible for one tag",
+      body: [
+        plural(racing.length, "leg") + " run <code>electron-builder</code> in a publish mode that reaches " +
+          "<code>createRelease()</code>: " + racing.map(function (l) { return "<code>" + esc(l.legLabel) + "</code> (publish mode <code>" + esc(l.mode) + "</code>)"; }).join(", ") + ".",
+        "Each of them calls <code>getOrCreateRelease()</code>, which lists the repository's releases, finds no " +
+          "draft carrying this tag, and POSTs a new one. Nothing serialises those two sequences. Any leg that " +
+          "reads before another leg writes will create its own draft, and GitHub accepts it, because a draft " +
+          "release has no git tag behind it and duplicate <code>tag_name</code> strings on drafts are legal.",
+        "What you will see: no job fails, no step errors, exit code 0 on every leg. The installers end up split " +
+          "across the drafts, and whichever draft you publish is missing whatever landed on the others.",
+        "And <code>gh release view</code> will not settle it for you. <code>FetchRelease</code> in " +
+          "<code>cli/cli</code> starts two goroutines, a published lookup and a draft lookup, into a 2-slot " +
+          "channel and returns whichever answers first. The draft lookup asks GraphQL for " +
+          "<code>release(tagName:)</code>, singular, so the second draft is not just deprioritised, it is " +
+          "invisible to the command line entirely.",
+        "The fix that does not need a mutex: build with <code>--publish never</code>, upload the output with " +
+          "<code>actions/upload-artifact</code>, and give the release its own single job with " +
+          "<code>needs:</code>. One job, one creator, no race. Load the \"after\" sample to see that shape."
+      ]
+    });
+  }
+
+  collisions.forEach(function (name) {
+    var group = byManifest[name];
+    findings.push({
+      sev: "med",
+      title: "Manifest collision on " + name,
+      body: [
+        "These legs each produce <code>" + esc(name) + "</code>: " +
+          group.map(function (l) { return "<code>" + esc(l.legLabel) + "</code> (" + esc(l.platform) + "/" + esc(l.arches.map(String).join(",")) + ")"; }).join(", ") + ".",
+        "Derived, not looked up: <code>getUpdateInfoFileName</code> appends the platform suffix only when the " +
+          "platform is not Windows, and <code>getArchPrefixForUpdateFile</code> returns an empty string unless " +
+          "the platform is Linux. Both of these legs therefore land on the same name.",
+        "Whoever uploads second wins. <code>overwriteArtifact</code> logs " +
+          "<code>overwrite published file</code>, DELETEs the existing asset, and uploads its own copy. This " +
+          "is publisher-independent: <code>softprops/action-gh-release</code> resolves the same conflict the " +
+          "same way, by deleting and replacing.",
+        "Net effect: every installer is present on the release page, and only one of these architectures is " +
+          "reachable by auto-update. Nothing in the logs is red."
+      ]
+    });
+  });
+
+  if (res.unknown.length) {
+    findings.push({
+      sev: "info",
+      title: plural(res.unknown.length, "leg") + " with an unrecognised runner label",
+      body: [
+        res.unknown.map(function (l) { return "<code>" + esc(l.legLabel) + "</code> on <code>" + esc(l.runsOn) + "</code>"; }).join(", ") + ".",
+        "That label is not in the runs-on table, and the leg carries no explicit arch, so its platform is " +
+          "unknown and it was left out of the manifest analysis rather than guessed at. Add the label to the " +
+          "table above and re-run."
+      ]
+    });
+  }
+
+  /* verdict */
+  var v = el("div", { class: "verdict " + (findings.some(function (f) { return f.sev !== "info"; }) ? "hit" : (legs.length ? "clean" : "none")) });
+  if (!legs.length) {
+    var pubNames = {};
+    res.other.forEach(function (o) { o.publishers.forEach(function (p) { pubNames[p] = 1; }); });
+    var pl = Object.keys(pubNames);
+    v.innerHTML = "<b>No electron-builder leg found</b> in " + plural(res.jobCount, "job") + ", so there are no " +
+      "update manifests to collide." + (pl.length ? " Release publishing here goes through " +
+      pl.map(function (p) { return "<code>" + esc(p) + "</code>"; }).join(" and ") + "." : "");
+  } else if (!findings.length) {
+    v.innerHTML = "<b>" + plural(legs.length, "leg") + ", " + plural(platCount, "platform") +
+      ", no shared manifest - clean.</b>";
+  } else {
+    var hi = findings.filter(function (f) { return f.sev !== "info"; }).length;
+    v.innerHTML = "<b>" + plural(hi, "finding") + "</b> across " + plural(legs.length, "leg") + " on " +
+      plural(platCount, "platform") + ". " + (racing.length > 1 ? "The draft race is the one to fix first." : "");
+  }
+  out.appendChild(v);
+
+  findings.forEach(function (f) {
+    var d = el("div", { class: "finding " + f.sev });
+    var h = el("h3");
+    h.appendChild(el("span", { class: "sev " + f.sev, text: f.sev === "high" ? "high" : (f.sev === "med" ? "medium" : "note") }));
+    h.appendChild(document.createTextNode(" " + f.title));
+    d.appendChild(h);
+    f.body.forEach(function (p) { d.appendChild(el("p", { html: p })); });
+    out.appendChild(d);
+  });
+
+  /* legs table */
+  var all = legs.concat(res.other);
+  if (all.length) {
+    var wrap = el("div", { class: "tblwrap" });
+    var tbl = el("table");
+    var thead = el("thead");
+    var hr = el("tr");
+    ["leg", "runs-on", "platform", "arch", "arch from", "publish mode", "creates release", "update manifest"].forEach(function (h) {
+      hr.appendChild(el("th", { text: h }));
+    });
+    thead.appendChild(hr);
+    tbl.appendChild(thead);
+    var tb = el("tbody");
+    all.forEach(function (l) {
+      var isColliding = (l.manifests || []).some(function (n) { return collisions.indexOf(n) >= 0; });
+      var tr = el("tr", isColliding ? { class: "bad" } : null);
+      tr.appendChild(el("td", { class: "mono", text: l.legLabel }));
+      tr.appendChild(el("td", { class: "mono", text: l.runsOn }));
+      tr.appendChild(el("td", { class: "mono" + (l.platform ? "" : " dim"), text: l.platform || "unknown" }));
+      tr.appendChild(el("td", { class: "mono" + (l.arches[0] ? "" : " dim"), text: l.arches.map(function (a) { return a || "unknown"; }).join(", ") }));
+      tr.appendChild(el("td", { class: "mono dim", text: l.archSource || "n/a" }));
+      tr.appendChild(el("td", { class: "mono" + (l.hasEb ? "" : " dim"), text: l.hasEb ? l.mode : (l.publishers.join(", ") || "n/a") }));
+      tr.appendChild(el("td", { class: "mono " + (l.publishes ? "flag" : "dim"), text: l.hasEb ? (l.publishes ? "yes" : "no") : "not electron-builder" }));
+      tr.appendChild(el("td", { class: "mono" + (isColliding ? " flag" : ""), text: (l.manifests && l.manifests.length) ? l.manifests.join(", ") : "none" }));
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    wrap.appendChild(tbl);
+    out.appendChild(wrap);
+
+    var note = el("p", { class: "hint" });
+    note.innerHTML = "Rows without <code>electron-builder</code> are listed for context and are not counted as " +
+      "legs, because they produce no update manifests. Tag-triggered workflow: <b>" + (res.onTag ? "yes" : "no") +
+      "</b>, which is what decides whether a non-<code>always</code> publish mode still reaches " +
+      "<code>createRelease()</code>.";
+    out.appendChild(note);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * samples
+ * ------------------------------------------------------------------ */
+var SAMPLE_BEFORE = "name: release\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\njobs:\n  build:\n    strategy:\n      matrix:\n        os: [windows-latest, macos-latest]\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 20 }\n      - run: npm ci\n      - run: npx electron-builder --publish always\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n";
+var SAMPLE_AFTER = "name: release\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n\n# Why this is two jobs instead of one.\n#\n# The previous version ran `electron-builder --publish always` on every matrix\n# OS. Both runners then raced to create the GitHub release for the same tag, and\n# GitHub happily created TWO draft releases with the same tag name, splitting the\n# artifacts across them: one draft ended up holding a single stray .blockmap\n# while the other held the installers. Building and publishing are now separate,\n# so exactly one job ever touches the release.\n\njobs:\n  build:\n    strategy:\n      fail-fast: false\n      matrix:\n        os: [windows-latest, macos-latest]\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 20 }\n      - run: npm ci\n      - name: Build installers\n        run: npx electron-builder --publish never\n      - uses: actions/upload-artifact@v4\n        with:\n          name: dist-${{ matrix.os }}\n          if-no-files-found: error\n          retention-days: 7\n          path: |\n            dist/*.exe\n            dist/*.dmg\n            dist/*.blockmap\n            dist/latest*.yml\n\n  publish:\n    needs: build\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/download-artifact@v4\n        with:\n          path: artifacts\n      - name: Collect artifacts\n        run: |\n          mkdir -p out\n          find artifacts -type f -exec mv -n {} out/ \\;\n          echo \"collected:\"\n          ls -lh out\n          test -n \"$(ls -A out)\" || { echo \"no artifacts collected\"; exit 1; }\n      - name: Publish single draft release\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n        run: |\n          if gh release view \"$GITHUB_REF_NAME\" --repo \"$GITHUB_REPOSITORY\" >/dev/null 2>&1; then\n            gh release upload \"$GITHUB_REF_NAME\" out/* --repo \"$GITHUB_REPOSITORY\" --clobber\n          else\n            gh release create \"$GITHUB_REF_NAME\" out/* \\\n              --repo \"$GITHUB_REPOSITORY\" \\\n              --title \"$GITHUB_REF_NAME\" \\\n              --notes \"Automated build of $GITHUB_REF_NAME.\" \\\n              --draft\n          fi\n";
+var SAMPLE_ARCH = "# Synthetic. Not from this account owner's repos. It exists to fire the\n# arch-split finding, which his own [windows-latest, macos-latest] matrix\n# never could.\nname: release\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\njobs:\n  build:\n    strategy:\n      fail-fast: false\n      matrix:\n        os: [windows-latest, windows-11-arm, macos-13, macos-latest]\n        include:\n          - os: ubuntu-24.04-arm\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 20 }\n      - run: npm ci\n      - run: npx electron-builder --publish always\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n";
+var SAMPLE_DYN = "# Synthetic. Shows the case this tool refuses to guess at.\nname: release\non:\n  push:\n    tags: ['v*']\njobs:\n  setup:\n    runs-on: ubuntu-latest\n    outputs:\n      matrix: ${{ steps.pick.outputs.matrix }}\n    steps:\n      - id: pick\n        run: |\n          echo \"matrix={\\\"os\\\":[\\\"windows-latest\\\",\\\"macos-latest\\\"]}\" >> \"$GITHUB_OUTPUT\"\n\n  build:\n    needs: setup\n    strategy:\n      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - run: npx electron-builder --publish always\n";
+var SAMPLE_SOFT = "# Synthetic. The commonest Electron release shape on GitHub, and the reason\n# this tool has to know who the publisher is. Two legs, both uploading to one\n# release, and no draft-race finding: softprops/action-gh-release catches a 422\n# already_exists on creation and retries into the existing release.\nname: release\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\njobs:\n  build:\n    strategy:\n      matrix:\n        os: [windows-latest, macos-latest]\n    runs-on: ${{ matrix.os }}\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 20 }\n      - run: npm ci\n      - run: npx electron-builder --publish never\n      - uses: softprops/action-gh-release@v2\n        with:\n          draft: true\n          files: |\n            dist/*.exe\n            dist/*.dmg\n            dist/latest*.yml\n";
+
+/* ------------------------------------------------------------------ *
+ * wiring
+ * ------------------------------------------------------------------ */
+var srcEl = document.getElementById("src");
+
+function run() {
+  var text = srcEl.value;
+  if (!text.trim()) {
+    showError("Nothing to analyse.", [
+      "The box is empty. Paste a workflow file, or press one of the sample buttons above."
+    ], false);
+    return;
+  }
+  var res;
+  try {
+    res = analyse(text);
+  } catch (e) {
+    showError("This input could not be parsed as a workflow.", [
+      esc(e && e.message ? e.message : String(e)),
+      "This tool parses a practical subset of YAML: nested maps, block sequences, sequences of maps, flow maps " +
+        "such as <code>{ node-version: 20 }</code>, flow sequences, quoted scalars and block scalars. Anchors, " +
+        "aliases, merge keys and multi-document streams are not supported, and it will say so rather than " +
+        "producing a wrong answer."
+    ], false);
+    return;
+  }
+  try {
+    render(res);
+  } catch (e2) {
+    showError("The analysis failed.", [esc(e2 && e2.message ? e2.message : String(e2))], false);
+  }
+}
+
+function loadSample(text) { srcEl.value = text; run(); window.scrollTo({ top: 0, behavior: "auto" }); }
+
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("clear").addEventListener("click", function () { srcEl.value = ""; out.textContent = ""; srcEl.focus(); });
+document.getElementById("s-before").addEventListener("click", function () { loadSample(SAMPLE_BEFORE); });
+document.getElementById("s-after").addEventListener("click", function () { loadSample(SAMPLE_AFTER); });
+document.getElementById("s-arch").addEventListener("click", function () { loadSample(SAMPLE_ARCH); });
+document.getElementById("s-dyn").addEventListener("click", function () { loadSample(SAMPLE_DYN); });
+document.getElementById("s-soft").addEventListener("click", function () { loadSample(SAMPLE_SOFT); });
+
+document.getElementById("addrunner").addEventListener("click", function () {
+  runners.push(["new-runner-label", "linux", "x64"]);
+  saveRunners();
+  renderRunners();
+});
+document.getElementById("resetrunners").addEventListener("click", function () {
+  runners = DEFAULT_RUNNERS.map(function (r) { return r.slice(); });
+  saveRunners();
+  renderRunners();
+});
+document.getElementById("channel").addEventListener("input", function () {
+  renderGrid();
+  if (srcEl.value.trim()) run();
+});
+
+loadRunners();
+renderRunners();
+renderGrid();
+srcEl.value = SAMPLE_BEFORE;
+run();
+
+})();
+</script>
+</body>
+</html>
