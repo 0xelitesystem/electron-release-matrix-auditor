@@ -69,6 +69,24 @@ Every quoted excerpt on the page cites its file and function and was read from t
 - `pkg/cmd/release/shared/fetch.go` in https://github.com/cli/cli
 - `src/github.ts` in https://github.com/softprops/action-gh-release
 
+## Third-party notices
+
+This tool reimplements small parts of, and quotes source from, the MIT licensed
+projects below. It bundles none of their code, ships no dependency, and makes no
+network request to any of them. Each excerpt is attributed in place on the page.
+
+- electron-builder. Copyright (c) 2015 Loopline Systems. MIT.
+  https://github.com/electron-userland/electron-builder
+  The manifest naming in this page is a reimplementation of
+  `getUpdateInfoFileName` and `getArchPrefixForUpdateFile` from
+  `packages/app-builder-lib/src/publish/updateInfoBuilder.ts`.
+- GitHub CLI. Copyright (c) 2019 GitHub Inc. MIT.
+  https://github.com/cli/cli
+  `FetchRelease` from `pkg/cmd/release/shared/fetch.go` is quoted for analysis.
+- action-gh-release. Copyright (c) 2019-current Doug Tangren. MIT.
+  https://github.com/softprops/action-gh-release
+  Its 422 `already_exists` handling in `src/github.ts` is quoted for analysis.
+
 ## License
 
 MIT. Copyright (c) 2026 0xelitesystem.
