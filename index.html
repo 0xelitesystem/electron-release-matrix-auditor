@@ -208,7 +208,7 @@ nobody anticipated. Change the channel and watch every name change with it.</p>
   <input id="channel" value="latest" spellcheck="false">
   <span class="dim" id="gridsummary"></span>
 </div>
-<div class="tblwrap">
+<div class="tblwrap" tabindex="0" role="region" aria-label="Update manifest names by platform and arch">
   <table>
     <thead><tr><th>platform</th><th>arch</th><th class="mono">update manifest</th><th>shared with</th></tr></thead>
     <tbody id="grid"></tbody>
@@ -227,7 +227,7 @@ one of the two architectures unreachable by auto-update.</p>
 <div class="quote">
   <p class="src">electron-builder, <b>packages/app-builder-lib/src/publish/updateInfoBuilder.ts</b>, lines 65 to 75,
   functions <b>getUpdateInfoFileName</b> and <b>getArchPrefixForUpdateFile</b></p>
-<pre><code>function getUpdateInfoFileName(channel: string, packager: PlatformPackager&lt;any&gt;, arch: Arch | null): string {
+<pre tabindex="0" role="region" aria-label="Quoted source: getUpdateInfoFileName and getArchPrefixForUpdateFile, updateInfoBuilder.ts"><code>function getUpdateInfoFileName(channel: string, packager: PlatformPackager&lt;any&gt;, arch: Arch | null): string {
   const osSuffix = packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
   return `${channel}${osSuffix}${getArchPrefixForUpdateFile(arch, packager)}.yml`
 }
@@ -247,7 +247,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 <div class="quote">
   <p class="src">electron-builder, <b>packages/electron-publish/src/gitHubPublisher.ts</b>, lines 145 to 155,
   method <b>overwriteArtifact</b></p>
-<pre><code>  private async overwriteArtifact(fileName: string, release: Release) {
+<pre tabindex="0" role="region" aria-label="Quoted source: overwriteArtifact, gitHubPublisher.ts"><code>  private async overwriteArtifact(fileName: string, release: Release) {
     // delete old artifact and re-upload
     log.warn({ file: fileName, reason: "already exists on GitHub" }, "overwrite published file")
 
@@ -267,7 +267,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 <div class="quote">
   <p class="src">electron-builder, <b>packages/electron-publish/src/gitHubPublisher.ts</b>, lines 79 to 94,
   method <b>getOrCreateRelease</b></p>
-<pre><code>  private async getOrCreateRelease(): Promise&lt;Release | null&gt; {
+<pre tabindex="0" role="region" aria-label="Quoted source: getOrCreateRelease, gitHubPublisher.ts"><code>  private async getOrCreateRelease(): Promise&lt;Release | null&gt; {
     const logFields = {
       tag: this.tag,
       version: this.version,
@@ -289,7 +289,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 </div>
 <div class="quote">
   <p class="src">same file, lines 126 to 136, the "create" half</p>
-<pre><code>    // https://github.com/electron-userland/electron-builder/issues/1835
+<pre tabindex="0" role="region" aria-label="Quoted source: the create half, gitHubPublisher.ts lines 126 to 136"><code>    // https://github.com/electron-userland/electron-builder/issues/1835
     if (this.options.publish === "always" || getCiTag() != null) {
       log.info(
         {
@@ -307,7 +307,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 </div>
 <div class="quote">
   <p class="src">same file, lines 225 to 236, method <b>createRelease</b></p>
-<pre><code>  private createRelease() {
+<pre tabindex="0" role="region" aria-label="Quoted source: createRelease, gitHubPublisher.ts"><code>  private createRelease() {
     const data: Record&lt;string, any&gt; = {
       tag_name: this.tag,
       name: this.releaseName || this.version,
@@ -324,7 +324,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 </div>
 <div class="quote">
   <p class="src">same file, lines 215 to 223 (definition) and lines 202 to 203 (its only call site)</p>
-<pre><code>  private doesErrorMeanAlreadyExists(e: any) {
+<pre tabindex="0" role="region" aria-label="Quoted source: doesErrorMeanAlreadyExists definition, gitHubPublisher.ts"><code>  private doesErrorMeanAlreadyExists(e: any) {
     if (!e.description) {
       return false
     }
@@ -333,7 +333,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
       (desc.includes("errors") &amp;&amp; desc.includes("already_exists")) || (desc.errors &amp;&amp; desc.errors.length &gt;= 1 &amp;&amp; desc.errors[0].code === "already_exists")
     return e.statusCode === 422 &amp;&amp; descIncludesAlreadyExists
   }</code></pre>
-<pre><code>        } else if (this.doesErrorMeanAlreadyExists(e)) {
+<pre tabindex="0" role="region" aria-label="Quoted source: doesErrorMeanAlreadyExists call site, gitHubPublisher.ts"><code>        } else if (this.doesErrorMeanAlreadyExists(e)) {
           return this.overwriteArtifact(fileName, release).then(() =&gt; this.doUploadFile(attemptNumber + 1, parsedUrl, fileName, dataLength, requestProcessor, release))</code></pre>
   <p>The 422 already-exists handler does exist. It is wired into the asset upload path only, and that call
   site at line 202 is the only one in the file. Release creation has no 422 handling at all, which is a
@@ -345,7 +345,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 <div class="quote">
   <p class="src">softprops/action-gh-release, <b>src/github.ts</b>, lines 1111 to 1118, inside
   <b>createRelease</b></p>
-<pre><code>      case 422:
+<pre tabindex="0" role="region" aria-label="Quoted source: createRelease, action-gh-release src/github.ts"><code>      case 422:
         // Check if this is a race condition with "already_exists" error
         if (hasValidationErrorCode(error, 'already_exists')) {
           console.log(
@@ -359,8 +359,8 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 <div class="quote">
   <p class="src">same file, line 637, inside <b>release</b>; and lines 950 to 964, function
   <b>cleanupCreatedDuplicateDraftRelease</b></p>
-<pre><code>    _release = await findTagFromReleases(releaser, owner, repo, tag, maxRetries);</code></pre>
-<pre><code>async function cleanupCreatedDuplicateDraftRelease(
+<pre tabindex="0" role="region" aria-label="Quoted source: release, action-gh-release src/github.ts line 637"><code>    _release = await findTagFromReleases(releaser, owner, repo, tag, maxRetries);</code></pre>
+<pre tabindex="0" role="region" aria-label="Quoted source: cleanupCreatedDuplicateDraftRelease, action-gh-release src/github.ts"><code>async function cleanupCreatedDuplicateDraftRelease(
   releaser: Releaser,
   owner: string,
   repo: string,
@@ -386,7 +386,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 <div class="quote">
   <p class="src">cli/cli, <b>pkg/cmd/release/shared/fetch.go</b>, lines 192 to 221, function
   <b>FetchRelease</b></p>
-<pre><code>func FetchRelease(ctx context.Context, httpClient *http.Client, repo ghrepo.Interface, tagName string) (*Release, error) {
+<pre tabindex="0" role="region" aria-label="Quoted source: FetchRelease, cli/cli fetch.go"><code>func FetchRelease(ctx context.Context, httpClient *http.Client, repo ghrepo.Interface, tagName string) (*Release, error) {
 	publishedURL, err := safeurl.JoinPathWithHostPrefix(ghinstance.RESTPrefix(repo.RepoHost()), "repos", repo.RepoOwner(), repo.RepoName(), "releases", "tags", tagName)
 	if err != nil {
 		return nil, err
@@ -422,7 +422,7 @@ function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackage
 </div>
 <div class="quote">
   <p class="src">same file, lines 247 to 255, function <b>fetchDraftRelease</b></p>
-<pre><code>	// First use GraphQL to find a draft release by pending tag name, since REST doesn't have this ability.
+<pre tabindex="0" role="region" aria-label="Quoted source: fetchDraftRelease, cli/cli fetch.go"><code>	// First use GraphQL to find a draft release by pending tag name, since REST doesn't have this ability.
 	var query struct {
 		Repository struct {
 			Release *struct {
@@ -1228,7 +1228,7 @@ function render(res) {
   /* legs table */
   var all = legs.concat(res.other);
   if (all.length) {
-    var wrap = el("div", { class: "tblwrap" });
+    var wrap = el("div", { class: "tblwrap", tabindex: "0", role: "region", "aria-label": "Audited matrix legs" });
     var tbl = el("table");
     var thead = el("thead");
     var hr = el("tr");
