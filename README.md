@@ -89,7 +89,7 @@ network request to any of them. Each excerpt is attributed in place on the page.
 
 ## License
 
-MIT. Copyright (c) 2026 0xelitesystem.
+MIT. Copyright (c) 2026 RBL Industries LLC.
 
 ## Related
 
