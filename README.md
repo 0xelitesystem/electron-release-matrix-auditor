@@ -93,6 +93,6 @@ MIT. Copyright (c) 2026 RBL Industries LLC.
 
 ## Related
 
-- https://github.com/0xelitesystem/jwt-inspector
+- https://github.com/0xelitesystem/jwt-verify-in-browser
 - https://github.com/0xelitesystem/json-workbench
 - https://github.com/0xelitesystem/regex-diagram-playground
